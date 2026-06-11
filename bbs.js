@@ -4,7 +4,7 @@ const destinations = {
     status: 'Ready',
     description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
     command: 'CONNECT bbs.gutapfel.com.apfelorchardlabs.org',
-    endpoint: 'wss://bbs.gutapfel.com.apfelorchardlabs.org/'
+    host: 'bbs.gutapfel.com.apfelorchardlabs.org' // endpoint is built from the current page protocol
   },
   wang: {
     title: 'Save The WANG',
@@ -49,10 +49,10 @@ function renderDestination() {
     <code>${escapeHtml(destination.command)}</code>
   `;
 
-  connectButton.textContent = destination.endpoint ? 'Connect terminal' : 'Open destination';
+  connectButton.textContent = destination.host ? 'Connect terminal' : 'Open destination';
   terminalTitle.textContent = destination.title.toUpperCase();
-  terminalNote.innerHTML = destination.endpoint
-    ? `Browser terminal endpoint: <code>${escapeHtml(destination.endpoint)}</code>`
+  terminalNote.innerHTML = destination.host
+    ? `Browser terminal endpoint: <code>${escapeHtml(buildEndpoint(destination))}</code>`
     : 'This branch is not wired to the live terminal yet.';
 }
 
@@ -64,7 +64,7 @@ function connectSelectedDestination() {
     return;
   }
 
-  if (!destination.endpoint) {
+  if (!destination.host) {
     showLocalTerminal(destination);
     return;
   }
@@ -101,15 +101,26 @@ function openLiveTerminal(destination) {
   term.writeln('');
 
   try {
-    socket = new WebSocket(destination.endpoint);
+    socket = new WebSocket(buildEndpoint(destination));
     socket.binaryType = 'arraybuffer';
 
     socket.addEventListener('open', () => {
       term.writeln('CONNECT 57600');
       term.writeln('');
-      const attachAddon = new AttachAddon.AttachAddon(socket);
-      term.loadAddon(attachAddon);
+      term.onData(data => {
+        if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
+      });
       fitTerminal();
+    });
+
+    socket.addEventListener('message', event => {
+      if (event.data instanceof ArrayBuffer) {
+        term.write(decodeCp437(new Uint8Array(event.data)));
+      } else if (event.data instanceof Blob) {
+        event.data.arrayBuffer().then(buffer => term.write(decodeCp437(new Uint8Array(buffer))));
+      } else {
+        term.write(String(event.data));
+      }
     });
 
     socket.addEventListener('close', () => {
@@ -154,6 +165,32 @@ function disconnectTerminal() {
 
 function fitTerminal() {
   if (fitAddon) fitAddon.fit();
+}
+
+
+function buildEndpoint(destination) {
+  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${scheme}://${destination.host}/`;
+}
+
+const cp437High = [
+  'Ç','ü','é','â','ä','à','å','ç','ê','ë','è','ï','î','ì','Ä','Å',
+  'É','æ','Æ','ô','ö','ò','û','ù','ÿ','Ö','Ü','¢','£','¥','₧','ƒ',
+  'á','í','ó','ú','ñ','Ñ','ª','º','¿','⌐','¬','½','¼','¡','«','»',
+  '░','▒','▓','│','┤','╡','╢','╖','╕','╣','║','╗','╝','╜','╛','┐',
+  '└','┴','┬','├','─','┼','╞','╟','╚','╔','╩','╦','╠','═','╬','╧',
+  '╨','╤','╥','╙','╘','╒','╓','╫','╪','┘','┌','█','▄','▌','▐','▀',
+  'α','ß','Γ','π','Σ','σ','µ','τ','Φ','Θ','Ω','δ','∞','φ','ε','∩',
+  '≡','±','≥','≤','⌠','⌡','÷','≈','°','∙','·','√','ⁿ','²','■',' '
+];
+
+function decodeCp437(bytes) {
+  let output = '';
+  for (const byte of bytes) {
+    if (byte < 128) output += String.fromCharCode(byte);
+    else output += cp437High[byte - 128];
+  }
+  return output;
 }
 
 function escapeHtml(value) {
