@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apfel Orchard BBS | Terminal Gateway</title>
+  <meta name="description" content="Connect to the Apfel Orchard BBS through the web terminal or dial 254-566-2753.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+</head>
+<body class="bbs-page">
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Apfel Orchard home">
+      <span class="brand-mark">AO</span>
+      <span>
+        <strong>Apfel Orchard</strong>
+        <small>BBS Terminal Gateway</small>
+      </span>
+    </a>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="index.html#paths">Paths</a>
+      <a href="bbs.html" aria-current="page">BBS</a>
+      <a href="index.html#about">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="bbs-hero" aria-labelledby="bbs-title">
+      <div class="bbs-copy">
+        <p class="eyebrow">Line open</p>
+        <h1 id="bbs-title">Apfel Orchard Terminal</h1>
+        <p class="lead">Select a destination, then connect through the browser terminal. The dial-in line remains available for real modem sessions.</p>
+        <div class="bbs-dial-card">
+          <span class="bbs-dial-label">Dial-up access</span>
+          <a href="tel:2545662753">254-566-2753</a>
+          <small>8-N-1 terminal settings recommended.</small>
+        </div>
+      </div>
+
+      <div class="bbs-panel" aria-label="Apfel Orchard BBS connection panel">
+        <div class="destination-row">
+          <label for="destinationSelect">Destination</label>
+          <select id="destinationSelect">
+            <option value="bbs" selected>Apfel Orchard BBS</option>
+            <option value="wang">Save The WANG</option>
+            <option value="ibm">IBM Clones</option>
+            <option value="amiga">Archive The Amiga</option>
+          </select>
+        </div>
+
+        <div class="destination-preview" id="destinationPreview">
+          <span class="path-status">Ready</span>
+          <h2>Apfel Orchard BBS</h2>
+          <p>Launches the live WebSocket terminal bridge to the Synchronet BBS.</p>
+          <code>CONNECT bbs.gutapfel.com.apfelorchardlabs.org</code>
+        </div>
+
+        <div class="terminal-shell" id="terminalShell" hidden>
+          <div class="terminal-frame-bar">
+            <span></span><span></span><span></span>
+            <strong id="terminalTitle">APFEL ORCHARD BBS</strong>
+            <button id="disconnectButton" type="button">Disconnect</button>
+          </div>
+          <div id="liveTerminal" class="live-terminal" role="application" aria-label="Live Apfel Orchard BBS terminal"></div>
+        </div>
+
+        <div class="bbs-actions">
+          <button class="button primary" id="connectButton" type="button">Connect terminal</button>
+          <a class="button ghost" href="index.html#paths">Back to orchard</a>
+        </div>
+
+        <p class="terminal-note" id="terminalNote">Browser terminal endpoint: <code>wss://bbs.gutapfel.com.apfelorchardlabs.org/</code></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Apfel Orchard BBS</span>
+    <span>Web terminal + dial-in access.</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-attach@0.9.0/lib/xterm-addon-attach.min.js"></script>
+  <script src="bbs.js"></script>
+</body>
+</html>
