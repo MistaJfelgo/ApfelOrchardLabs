@@ -3,161 +3,103 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Apfel Orchard BBS - Live Terminal</title>
+  <title>Apfel Orchard BBS</title>
+  <meta name="description" content="Stable full-tab browser terminal for the Apfel Orchard BBS.">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
   <style>
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      background: #000;
-      overflow: hidden;
-    }
-    body {
-      color: #f2e7bf;
-      font-family: Consolas, "Cascadia Mono", Menlo, monospace;
-    }
-    .statusbar {
-      height: 34px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 0 12px;
-      background: #0d0501;
-      border-bottom: 1px solid rgba(255,190,96,.25);
-      color: #f8e5b8;
-      font-size: 14px;
-      box-sizing: border-box;
-      white-space: nowrap;
-    }
-    .statusbar .state { color: #ffb347; }
-    #terminal {
-      width: 100%;
-      height: calc(100% - 34px);
-      background: #000;
-    }
-    .xterm {
-      height: 100%;
-      padding: 8px 0 0 0;
-      box-sizing: border-box;
-    }
-    .xterm-viewport, .xterm-screen { background-color: #000 !important; }
+    html, body { margin: 0; width: 100%; height: 100%; background: #000; color: #f8e7bd; }
+    body { font-family: Consolas, "Cascadia Mono", "Courier New", monospace; overflow: hidden; }
+    .bar { height: 42px; display: flex; align-items: center; gap: 14px; padding: 0 12px; box-sizing: border-box; background: #0e0501; border-bottom: 1px solid rgba(255, 180, 80, .25); color: #f8e7bd; }
+    .state { color: #ffb347; }
+    .terminal-wrap { height: calc(100vh - 42px); overflow: auto; background: #000; }
+    #terminal { min-height: 100%; margin: 0; padding: 18px 0 48px 0; box-sizing: border-box; white-space: pre-wrap; word-break: normal; overflow-wrap: normal; font-size: 16px; line-height: 1.18; color: #f7e9c6; outline: none; }
+    .cursor { display: inline-block; width: .58em; height: 1.05em; background: #ffbd58; vertical-align: -0.12em; animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    ::selection { background: #ffbd58; color: #000; }
   </style>
 </head>
-<body tabindex="0">
-  <div class="statusbar">
+<body>
+  <div class="bar">
     <span>Apfel Orchard BBS</span>
     <span class="state" id="state">Connecting</span>
   </div>
-  <div id="terminal"></div>
+  <div class="terminal-wrap" id="scrollbox">
+    <pre id="terminal" tabindex="0" aria-label="Apfel Orchard BBS terminal"></pre>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
   <script>
-    const ENDPOINT = 'wss://bbs.apfelorchardlabs.org/';
-    const state = document.getElementById('state');
-    const terminalHost = document.getElementById('terminal');
-
-    const term = new Terminal({
-      cursorBlink: true,
-      convertEol: false,
-      cols: 256,
-      rows: 48,
-      fontFamily: 'Consolas, "Cascadia Mono", Menlo, monospace',
-      fontSize: 16,
-      lineHeight: 1.0,
-      letterSpacing: 0,
-      scrollback: 2000,
-      allowProposedApi: false,
-      theme: {
-        background: '#000000',
-        foreground: '#d8d8d8',
-        cursor: '#ffb347',
-        black: '#000000',
-        red: '#aa0000',
-        green: '#00aa00',
-        yellow: '#aa5500',
-        blue: '#0000aa',
-        magenta: '#aa00aa',
-        cyan: '#00aaaa',
-        white: '#aaaaaa',
-        brightBlack: '#555555',
-        brightRed: '#ff5555',
-        brightGreen: '#55ff55',
-        brightYellow: '#ffff55',
-        brightBlue: '#5555ff',
-        brightMagenta: '#ff55ff',
-        brightCyan: '#55ffff',
-        brightWhite: '#ffffff'
-      }
-    });
-
-    term.open(terminalHost);
-    term.focus();
-
+    const ENDPOINT = "wss://bbs.apfelorchardlabs.org/";
+    const term = document.getElementById("terminal");
+    const state = document.getElementById("state");
+    const scrollbox = document.getElementById("scrollbox");
     let socket;
+    let closed = false;
 
-    function setState(value) {
-      state.textContent = value;
+    function write(text) {
+      term.textContent += text;
+      scrollbox.scrollTop = scrollbox.scrollHeight;
     }
 
-    function writeData(data) {
-      // Match the previously working behavior: let xterm process ANSI, while
-      // avoiding aggressive CP437 transforms that can disturb control streams.
-      if (typeof data === 'string') {
-        term.write(data);
-        return;
-      }
-      if (data instanceof Blob) {
-        data.text().then(text => term.write(text));
-        return;
-      }
-      if (data instanceof ArrayBuffer) {
-        const text = new TextDecoder('windows-1252').decode(new Uint8Array(data));
-        term.write(text);
-        return;
-      }
-      term.write(String(data));
-    }
+    function setState(text) { state.textContent = text; }
 
     function connect() {
-      setState('Connecting');
+      setState("Connecting");
       socket = new WebSocket(ENDPOINT);
-      // Do not force arraybuffer here. The known-good page behaved better with
-      // browser/websockify default message handling.
+      socket.binaryType = "arraybuffer";
 
-      socket.addEventListener('open', () => {
-        setState('Connected');
+      socket.addEventListener("open", () => {
+        closed = false;
+        setState("Connected");
+        document.title = "Apfel Orchard BBS - Connected";
         term.focus();
       });
 
-      socket.addEventListener('message', event => writeData(event.data));
-
-      socket.addEventListener('close', () => {
-        setState('Disconnected');
-        term.write('\r\n\r\n[connection closed]\r\n');
+      socket.addEventListener("message", async (event) => {
+        if (typeof event.data === "string") {
+          write(event.data);
+        } else if (event.data instanceof Blob) {
+          const buf = await event.data.arrayBuffer();
+          write(new TextDecoder("utf-8", { fatal: false }).decode(buf));
+        } else {
+          write(new TextDecoder("utf-8", { fatal: false }).decode(event.data));
+        }
       });
 
-      socket.addEventListener('error', () => {
-        setState('Error');
-        term.write('\r\n\r\n[connection error]\r\n');
+      socket.addEventListener("close", () => {
+        if (!closed) write("\n[connection closed]\n");
+        closed = true;
+        setState("Disconnected");
+        document.title = "Apfel Orchard BBS - Disconnected";
+      });
+
+      socket.addEventListener("error", () => {
+        setState("Error");
       });
     }
 
-    term.onData(data => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(data);
-      }
+    function send(data) {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.ctrlKey && event.key.toLowerCase() === "r") return;
+      if (event.ctrlKey && event.key.toLowerCase() === "c") return;
+      if (event.altKey || event.metaKey) return;
+
+      if (event.key === "Enter") { event.preventDefault(); send("\r"); return; }
+      if (event.key === "Backspace") { event.preventDefault(); send("\b"); return; }
+      if (event.key === "Tab") { event.preventDefault(); send("\t"); return; }
+      if (event.key === "Escape") { event.preventDefault(); send("\x1b"); return; }
+      if (event.key === "ArrowUp") { event.preventDefault(); send("\x1b[A"); return; }
+      if (event.key === "ArrowDown") { event.preventDefault(); send("\x1b[B"); return; }
+      if (event.key === "ArrowRight") { event.preventDefault(); send("\x1b[C"); return; }
+      if (event.key === "ArrowLeft") { event.preventDefault(); send("\x1b[D"); return; }
+      if (event.key.length === 1) { event.preventDefault(); send(event.key); }
     });
 
-    window.addEventListener('message', event => {
-      if (event.data === 'ao-bbs-disconnect' && socket) socket.close();
-      if (event.data === 'ao-bbs-focus') term.focus();
-    });
-
-    window.addEventListener('beforeunload', () => {
-      if (socket && socket.readyState <= WebSocket.OPEN) socket.close();
+    window.addEventListener("beforeunload", () => {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.close();
     });
 
     connect();

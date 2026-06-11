@@ -3,181 +3,106 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Apfel Orchard BBS | Terminal Gateway</title>
-  <meta name="description" content="Connect to the Apfel Orchard BBS through the web terminal or dial 254-566-2753.">
+  <title>Apfel Orchard BBS</title>
+  <meta name="description" content="Stable full-tab browser terminal for the Apfel Orchard BBS.">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; background: #000; color: #f8e7bd; }
+    body { font-family: Consolas, "Cascadia Mono", "Courier New", monospace; overflow: hidden; }
+    .bar { height: 42px; display: flex; align-items: center; gap: 14px; padding: 0 12px; box-sizing: border-box; background: #0e0501; border-bottom: 1px solid rgba(255, 180, 80, .25); color: #f8e7bd; }
+    .state { color: #ffb347; }
+    .terminal-wrap { height: calc(100vh - 42px); overflow: auto; background: #000; }
+    #terminal { min-height: 100%; margin: 0; padding: 18px 0 48px 0; box-sizing: border-box; white-space: pre-wrap; word-break: normal; overflow-wrap: normal; font-size: 16px; line-height: 1.18; color: #f7e9c6; outline: none; }
+    .cursor { display: inline-block; width: .58em; height: 1.05em; background: #ffbd58; vertical-align: -0.12em; animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    ::selection { background: #ffbd58; color: #000; }
+  </style>
 </head>
-<body class="bbs-page">
-  <div class="noise" aria-hidden="true"></div>
-  <div class="scanlines" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <a class="brand" href="index.html" aria-label="Apfel Orchard home">
-      <span class="brand-mark">AO</span>
-      <span>
-        <strong>Apfel Orchard</strong>
-        <small>BBS Terminal Gateway</small>
-      </span>
-    </a>
-    <nav class="top-nav" aria-label="Main navigation">
-      <a href="index.html#paths">Paths</a>
-      <a href="bbs.html" aria-current="page">BBS</a>
-      <a href="index.html#about">About</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="bbs-hero" aria-labelledby="bbs-title">
-      <div class="bbs-copy">
-        <p class="eyebrow">Line open</p>
-        <h1 id="bbs-title">Apfel Orchard Terminal</h1>
-        <p class="lead">Select a destination, then connect through the browser terminal. The dial-in line remains available for real modem sessions.</p>
-        <div class="bbs-dial-card">
-          <span class="bbs-dial-label">Dial-up access</span>
-          <a href="tel:2545662753">254-566-2753</a>
-          <small>Not yet V.92 capable</small>
-        </div>
-      </div>
-
-      <div class="bbs-panel" aria-label="Apfel Orchard BBS connection panel">
-        <div class="destination-row">
-          <label for="destinationSelect">Destination</label>
-          <select id="destinationSelect">
-            <option value="bbs" selected>Apfel Orchard BBS</option>
-            <option value="wang">Save The WANG</option>
-            <option value="ibm">IBM Clones</option>
-            <option value="amiga">Archive The Amiga</option>
-          </select>
-        </div>
-
-        <div class="destination-preview" id="destinationPreview">
-          <span class="path-status">Ready</span>
-          <h2>Apfel Orchard BBS</h2>
-          <p>Launches the live WebSocket terminal bridge to the Synchronet BBS.</p>
-          <code>CONNECT bbs.apfelorchardlabs.org</code>
-        </div>
-
-        <div class="terminal-shell" id="terminalShell" hidden>
-          <div class="terminal-frame-bar">
-            <span></span><span></span><span></span>
-            <strong id="terminalTitle">APFEL ORCHARD BBS</strong>
-            <button id="disconnectButton" type="button">Disconnect</button>
-          </div>
-          <iframe id="bbsFrame" class="live-terminal bbs-terminal-frame" title="Live Apfel Orchard BBS terminal" src="about:blank"></iframe>
-        </div>
-
-        <div class="bbs-actions">
-          <button class="button primary" id="connectButton" type="button">Connect terminal</button>
-          <a class="button ghost" href="index.html#paths">Back to orchard</a>
-        </div>
-
-        <p class="terminal-note" id="terminalNote">Browser terminal endpoint: <code>wss://bbs.apfelorchardlabs.org/</code> <span style="opacity:.75">stable raw bridge</span></p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
+<body>
+  <div class="bar">
     <span>Apfel Orchard BBS</span>
-    <span>Web terminal + dial-in access.</span>
-  </footer>
+    <span class="state" id="state">Connecting</span>
+  </div>
+  <div class="terminal-wrap" id="scrollbox">
+    <pre id="terminal" tabindex="0" aria-label="Apfel Orchard BBS terminal"></pre>
+  </div>
 
   <script>
-    const destinations = {
-      bbs: {
-        title: 'Apfel Orchard BBS',
-        status: 'Ready',
-        description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
-        command: 'CONNECT bbs.apfelorchardlabs.org',
-        note: 'Browser terminal endpoint: <code>wss://bbs.apfelorchardlabs.org/</code> <span style="opacity:.75">stable raw bridge</span>',
-        frame: 'bbs-live.html?v=20260611-stable-raw'
-      },
-      wang: {
-        title: 'Save The WANG',
-        status: 'Branch',
-        description: 'Preservation notes, recovered media, hardware records, and Wang Professional Computer work.',
-        command: 'OPEN https://savethewang.org',
-        href: 'https://savethewang.org',
-        note: 'External preservation branch.'
-      },
-      ibm: {
-        title: 'IBM Clones',
-        status: 'Grafting',
-        description: 'Future home for PC compatibles, cards, drives, utilities, and clone-era notes.',
-        command: 'C:\\>DIR /W',
-        note: 'This branch is not wired to the live terminal yet.'
-      },
-      amiga: {
-        title: 'Archive The Amiga',
-        status: 'Germinating',
-        description: 'Future archive for Amiga disks, demos, sound, graphics, and restoration notes.',
-        command: 'SYS:WORKBENCH',
-        note: 'This branch is not wired to the live terminal yet.'
-      }
-    };
+    const ENDPOINT = "wss://bbs.apfelorchardlabs.org/";
+    const term = document.getElementById("terminal");
+    const state = document.getElementById("state");
+    const scrollbox = document.getElementById("scrollbox");
+    let socket;
+    let closed = false;
 
-    const select = document.getElementById('destinationSelect');
-    const preview = document.getElementById('destinationPreview');
-    const connectButton = document.getElementById('connectButton');
-    const disconnectButton = document.getElementById('disconnectButton');
-    const shell = document.getElementById('terminalShell');
-    const terminalTitle = document.getElementById('terminalTitle');
-    const terminalNote = document.getElementById('terminalNote');
-    const bbsFrame = document.getElementById('bbsFrame');
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
+    function write(text) {
+      term.textContent += text;
+      scrollbox.scrollTop = scrollbox.scrollHeight;
     }
 
-    function renderDestination() {
-      const destination = destinations[select.value];
-      preview.innerHTML = `
-        <span class="path-status">${escapeHtml(destination.status)}</span>
-        <h2>${escapeHtml(destination.title)}</h2>
-        <p>${escapeHtml(destination.description)}</p>
-        <code>${escapeHtml(destination.command)}</code>
-      `;
-      terminalTitle.textContent = destination.title.toUpperCase();
-      connectButton.textContent = destination.href ? 'Open destination' : destination.frame ? 'Connect terminal' : 'Preview destination';
-      terminalNote.innerHTML = destination.note;
+    function setState(text) { state.textContent = text; }
+
+    function connect() {
+      setState("Connecting");
+      socket = new WebSocket(ENDPOINT);
+      socket.binaryType = "arraybuffer";
+
+      socket.addEventListener("open", () => {
+        closed = false;
+        setState("Connected");
+        document.title = "Apfel Orchard BBS - Connected";
+        term.focus();
+      });
+
+      socket.addEventListener("message", async (event) => {
+        if (typeof event.data === "string") {
+          write(event.data);
+        } else if (event.data instanceof Blob) {
+          const buf = await event.data.arrayBuffer();
+          write(new TextDecoder("utf-8", { fatal: false }).decode(buf));
+        } else {
+          write(new TextDecoder("utf-8", { fatal: false }).decode(event.data));
+        }
+      });
+
+      socket.addEventListener("close", () => {
+        if (!closed) write("\n[connection closed]\n");
+        closed = true;
+        setState("Disconnected");
+        document.title = "Apfel Orchard BBS - Disconnected";
+      });
+
+      socket.addEventListener("error", () => {
+        setState("Error");
+      });
     }
 
-    function connectSelectedDestination() {
-      const destination = destinations[select.value];
-
-      if (destination.href) {
-        window.location.href = destination.href;
-        return;
-      }
-
-      shell.hidden = false;
-      terminalTitle.textContent = destination.title.toUpperCase();
-
-      if (destination.frame) {
-        bbsFrame.src = destination.frame;
-        setTimeout(() => bbsFrame.focus(), 300);
-        return;
-      }
-
-      bbsFrame.srcdoc = `<!doctype html><html><body style="margin:0;background:#000;color:#62ff8c;font:16px monospace;padding:24px;white-space:pre-wrap">APFEL ORCHARD TERMINAL\n\n${escapeHtml(destination.title.toUpperCase())}\n\n${escapeHtml(destination.description)}\n\n${escapeHtml(destination.command)}\n\n[destination not connected to live terminal yet]</body></html>`;
+    function send(data) {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
     }
 
-    function disconnectTerminal() {
-      bbsFrame.src = 'about:blank';
-      shell.hidden = true;
-    }
+    document.addEventListener("keydown", (event) => {
+      if (event.ctrlKey && event.key.toLowerCase() === "r") return;
+      if (event.ctrlKey && event.key.toLowerCase() === "c") return;
+      if (event.altKey || event.metaKey) return;
 
-    select.addEventListener('change', renderDestination);
-    connectButton.addEventListener('click', connectSelectedDestination);
-    disconnectButton.addEventListener('click', disconnectTerminal);
+      if (event.key === "Enter") { event.preventDefault(); send("\r"); return; }
+      if (event.key === "Backspace") { event.preventDefault(); send("\b"); return; }
+      if (event.key === "Tab") { event.preventDefault(); send("\t"); return; }
+      if (event.key === "Escape") { event.preventDefault(); send("\x1b"); return; }
+      if (event.key === "ArrowUp") { event.preventDefault(); send("\x1b[A"); return; }
+      if (event.key === "ArrowDown") { event.preventDefault(); send("\x1b[B"); return; }
+      if (event.key === "ArrowRight") { event.preventDefault(); send("\x1b[C"); return; }
+      if (event.key === "ArrowLeft") { event.preventDefault(); send("\x1b[D"); return; }
+      if (event.key.length === 1) { event.preventDefault(); send(event.key); }
+    });
 
-    renderDestination();
+    window.addEventListener("beforeunload", () => {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.close();
+    });
+
+    connect();
   </script>
 </body>
 </html>

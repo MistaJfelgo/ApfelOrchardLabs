@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apfel Orchard BBS | Embedded Terminal Dev</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Hidden work-in-progress page for embedded Apfel Orchard BBS terminal testing.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bbs-page">
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Apfel Orchard home">
+      <span class="brand-mark">AO</span>
+      <span>
+        <strong>Apfel Orchard</strong>
+        <small>Embedded Terminal Dev</small>
+      </span>
+    </a>
+    <nav class="top-nav" aria-label="Development navigation">
+      <a href="index.html#paths">Paths</a>
+      <a href="https://apfel.apfelorchardlabs.org/bbs.html" target="_blank" rel="noopener">Stable Terminal</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="bbs-dev-wrap">
+      <div class="destination-preview dev-warning">
+        <span class="path-status">WIP</span>
+        <h1>Embedded terminal test page</h1>
+        <p>This page is intentionally hidden from the main navigation. Production traffic should use the stable full-tab terminal.</p>
+        <code>wss://bbs.apfelorchardlabs.org/</code>
+        <div class="terminal-actions dev-actions">
+          <a class="button primary" href="https://apfel.apfelorchardlabs.org/bbs.html" target="_blank" rel="noopener">Launch Stable BBS</a>
+          <a class="button ghost" href="index.html">Back to Orchard</a>
+        </div>
+      </div>
+
+      <div class="terminal-shell dev-terminal-shell">
+        <div class="terminal-frame-bar">
+          <span></span><span></span><span></span>
+          <strong>APFEL ORCHARD BBS — EMBEDDED TEST</strong>
+        </div>
+        <iframe class="live-terminal bbs-terminal-frame dev-live-frame" title="Embedded live Apfel Orchard BBS terminal test" src="bbs-live.html?v=dev-20260611"></iframe>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
