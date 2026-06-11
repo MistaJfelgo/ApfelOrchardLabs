@@ -7,7 +7,7 @@ const destinations = {
     description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
     command: 'CONNECT bbs.apfelorchardlabs.org',
     host: 'bbs.apfelorchardlabs.org',
-    endpoint: 'ws://bbs.apfelorchardlabs.org/'
+    endpoint: 'wss://bbs.apfelorchardlabs.org/'
   },
   wang: {
     title: 'Save The WANG',
