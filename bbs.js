@@ -1,3 +1,4 @@
+// v5 uses inline JavaScript in bbs.html. This file is intentionally not required.
 // Apfel Orchard BBS terminal v4 - explicit plain WebSocket endpoint
 const destinations = {
   bbs: {
