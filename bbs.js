@@ -5,9 +5,9 @@ const destinations = {
     title: 'Apfel Orchard BBS',
     status: 'Ready',
     description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
-    command: 'CONNECT bbs.gutapfel.com.apfelorchardlabs.org',
-    host: 'bbs.gutapfel.com.apfelorchardlabs.org',
-    endpoint: 'ws://bbs.gutapfel.com.apfelorchardlabs.org/'
+    command: 'CONNECT bbs.apfelorchardlabs.org',
+    host: 'bbs.apfelorchardlabs.org',
+    endpoint: 'ws://bbs.apfelorchardlabs.org/'
   },
   wang: {
     title: 'Save The WANG',
