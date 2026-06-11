@@ -4,7 +4,8 @@ const destinations = {
     status: 'Ready',
     description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
     command: 'CONNECT bbs.gutapfel.com.apfelorchardlabs.org',
-    host: 'bbs.gutapfel.com.apfelorchardlabs.org' // endpoint is built from the current page protocol
+    host: 'bbs.gutapfel.com.apfelorchardlabs.org',
+    endpoint: 'ws://bbs.gutapfel.com.apfelorchardlabs.org/'
   },
   wang: {
     title: 'Save The WANG',
@@ -169,8 +170,10 @@ function fitTerminal() {
 
 
 function buildEndpoint(destination) {
-  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${scheme}://${destination.host}/`;
+  // The current Cloudflare/WebSocket bridge is published as plain ws://.
+  // Keeping this explicit avoids the browser upgrading to wss:// and missing the route.
+  if (destination.endpoint) return destination.endpoint;
+  return `ws://${destination.host}/`;
 }
 
 const cp437High = [
