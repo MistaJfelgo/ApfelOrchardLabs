@@ -1,17 +1,17 @@
 const terminal = document.getElementById('terminalText');
 
 const lines = [
-  'APFEL ORCHARD GATEWAY',
-  '----------------------',
+  'APFEL ORCHARD BBS',
+  '-----------------',
+  'DIAL 254-566-2753',
+  '',
   '[1] BBS',
   '[2] SAVE THE WANG',
   '[3] IBM CLONES',
   '[4] AMIGA',
   '',
-  'DIAL 254-566-2753',
-  'TO CONNECT',
-  '',
-  'ATDT2545662753'
+  'ATDT2545662753',
+  'CONNECT 57600'
 ];
 
 let output = '';
