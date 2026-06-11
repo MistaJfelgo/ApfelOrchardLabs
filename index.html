@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apfel Orchard | Choose Your Path</title>
+  <meta name="description" content="Apfel Orchard gateway: BBS, Wang preservation, IBM clones, and Amiga archives.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Apfel Orchard home">
+      <span class="brand-mark">AO</span>
+      <span>
+        <strong>Apfel Orchard</strong>
+        <small>Computing Preservation Gateway</small>
+      </span>
+    </a>
+    <nav class="top-nav" aria-label="Main navigation">
+      <a href="#paths">Paths</a>
+      <a href="#bbs">BBS</a>
+      <a href="#about">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Vintage signals from a strange little orchard</p>
+        <h1 id="hero-title">Choose your path.</h1>
+        <p class="lead">Dial in, branch out, and wander through preserved machines, old disks, recovered systems, and a BBS still waiting for callers.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#paths">Enter the orchard</a>
+          <a class="button ghost" href="tel:2545662753">Dial 254-566-2753</a>
+        </div>
+      </div>
+
+      <div class="orchard-scene" aria-label="Old apple tree with a terminal glowing inside one large apple">
+        <div class="moon"></div>
+        <div class="hills"></div>
+        <div class="tree">
+          <div class="trunk"></div>
+          <div class="branch branch-one"></div>
+          <div class="branch branch-two"></div>
+          <div class="branch branch-three"></div>
+          <div class="canopy canopy-one"></div>
+          <div class="canopy canopy-two"></div>
+          <div class="canopy canopy-three"></div>
+          <div class="canopy canopy-four"></div>
+          <div class="apple-cord"></div>
+          <div class="big-apple" id="bbs">
+            <div class="apple-shine"></div>
+            <div class="terminal" role="img" aria-label="Fake terminal saying dial 254-566-2753 to connect to Apfel Orchard BBS">
+              <div class="terminal-bar">
+                <span></span><span></span><span></span>
+              </div>
+              <pre id="terminalText"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="paths-section" id="paths" aria-labelledby="paths-title">
+      <p class="eyebrow centered">Gateway menu</p>
+      <h2 id="paths-title">Select destination</h2>
+      <div class="path-grid">
+        <a class="path-card" href="#bbs">
+          <span class="path-number">01</span>
+          <h3>Apfel Orchard BBS</h3>
+          <p>Modems, terminal glow, telnet paths, and the sound of a system waiting on the other side.</p>
+          <span class="path-command">ATDT 254-566-2753</span>
+        </a>
+        <a class="path-card" href="https://savethewang.org">
+          <span class="path-number">02</span>
+          <h3>Save The WANG</h3>
+          <p>Wang Professional Computer software, hardware notes, manuals, and recovery logs.</p>
+          <span class="path-command">LOAD WANGNET</span>
+        </a>
+        <a class="path-card" href="#ibm-clones">
+          <span class="path-number">03</span>
+          <h3>IBM Clones</h3>
+          <p>The beige middle kingdom: compatibles, cards, drives, utilities, and the practical weirdness of the PC ecosystem.</p>
+          <span class="path-command">C:\&gt;DIR /W</span>
+        </a>
+        <a class="path-card" href="#amiga">
+          <span class="path-number">04</span>
+          <h3>Archive The Amiga</h3>
+          <p>Color, sound, demos, disks, and the machine that made the future feel personal.</p>
+          <span class="path-command">SYS:WORKBENCH</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="about" id="about">
+      <div>
+        <p class="eyebrow">What this is</p>
+        <h2>An orchard for surviving machines.</h2>
+      </div>
+      <p>Apfel Orchard is the front gate for a set of personal computing preservation projects: the BBS, Wang Professional Computer recovery work, IBM clone notes, and future Amiga archives. Some branches are active. Some are still being grafted.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Apfel Orchard</span>
+    <span>Rooted in old machines. Still accepting calls.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
