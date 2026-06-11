@@ -623,10 +623,19 @@ pre {
 
 
 /* Embedded live BBS terminal frame */
-.bbs-terminal-frame {
+.live-terminal.bbs-terminal-frame {
   display: block;
   width: 100%;
+  height: min(70vh, 620px);
+  min-height: 470px;
+  padding: 0;
   border: 0;
   background: #000;
   color-scheme: dark;
+}
+@media (max-width: 640px) {
+  .live-terminal.bbs-terminal-frame {
+    height: 64vh;
+    min-height: 390px;
+  }
 }
