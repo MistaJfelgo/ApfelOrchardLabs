@@ -1,3 +1,4 @@
+// Apfel Orchard BBS terminal v4 - explicit plain WebSocket endpoint
 const destinations = {
   bbs: {
     title: 'Apfel Orchard BBS',
@@ -102,7 +103,10 @@ function openLiveTerminal(destination) {
   term.writeln('');
 
   try {
-    socket = new WebSocket(buildEndpoint(destination));
+    const endpoint = buildEndpoint(destination);
+    term.writeln('Endpoint: ' + endpoint);
+    term.writeln('');
+    socket = new WebSocket(endpoint);
     socket.binaryType = 'arraybuffer';
 
     socket.addEventListener('open', () => {
@@ -132,7 +136,8 @@ function openLiveTerminal(destination) {
     socket.addEventListener('error', () => {
       term.writeln('');
       term.writeln('[connection error]');
-      term.writeln('Check the Cloudflare/WebSocket route for the BBS endpoint.');
+      term.writeln('Endpoint refused: ' + buildEndpoint(destination));
+      term.writeln('Check DNS/Cloudflare cache, then hard-refresh this page.');
     });
   } catch (error) {
     term.writeln('[terminal unavailable]');
