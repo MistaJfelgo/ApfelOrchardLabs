@@ -8,7 +8,6 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 </head>
 <body class="bbs-page">
   <div class="noise" aria-hidden="true"></div>
@@ -38,7 +37,7 @@
         <div class="bbs-dial-card">
           <span class="bbs-dial-label">Dial-up access</span>
           <a href="tel:2545662753">254-566-2753</a>
-          <small>Not yet V.92 Capable</small>
+          <small>Not yet V.92 capable</small>
         </div>
       </div>
 
@@ -66,7 +65,7 @@
             <strong id="terminalTitle">APFEL ORCHARD BBS</strong>
             <button id="disconnectButton" type="button">Disconnect</button>
           </div>
-          <div id="liveTerminal" class="live-terminal" role="application" aria-label="Live Apfel Orchard BBS terminal"></div>
+          <iframe id="bbsFrame" class="live-terminal bbs-terminal-frame" title="Live Apfel Orchard BBS terminal" src="about:blank"></iframe>
         </div>
 
         <div class="bbs-actions">
@@ -74,7 +73,7 @@
           <a class="button ghost" href="index.html#paths">Back to orchard</a>
         </div>
 
-        <p class="terminal-note" id="terminalNote">Browser terminal endpoint: <code>wss://bbs.apfelorchardlabs.org/</code> <span style="opacity:.75">v5-inline</span></p>
+        <p class="terminal-note" id="terminalNote">Browser terminal endpoint: <code>wss://bbs.apfelorchardlabs.org/</code> <span style="opacity:.75">iframe bridge</span></p>
       </div>
     </section>
   </main>
@@ -84,231 +83,101 @@
     <span>Web terminal + dial-in access.</span>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
   <script>
-/* Apfel Orchard inline BBS terminal v5: no external bbs.js cache path */
-// Apfel Orchard BBS terminal v5 INLINE - explicit plain WebSocket endpoint
-const destinations = {
-  bbs: {
-    title: 'Apfel Orchard BBS',
-    status: 'Ready',
-    description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
-    command: 'CONNECT bbs.apfelorchardlabs.org',
-    host: 'bbs.apfelorchardlabs.org',
-    endpoint: 'wss://bbs.apfelorchardlabs.org/'
-  },
-  wang: {
-    title: 'Save The WANG',
-    status: 'Branch',
-    description: 'Preservation notes, recovered media, hardware records, and Wang Professional Computer work.',
-    command: 'OPEN https://savethewang.org',
-    href: 'https://savethewang.org'
-  },
-  ibm: {
-    title: 'IBM Clones',
-    status: 'Grafting',
-    description: 'Future home for PC compatibles, cards, drives, utilities, and clone-era notes.',
-    command: 'C:\\>DIR /W'
-  },
-  amiga: {
-    title: 'Archive The Amiga',
-    status: 'Germinating',
-    description: 'Future archive for Amiga disks, demos, sound, graphics, and restoration notes.',
-    command: 'SYS:WORKBENCH'
-  }
-};
-
-const select = document.getElementById('destinationSelect');
-const preview = document.getElementById('destinationPreview');
-const connectButton = document.getElementById('connectButton');
-const disconnectButton = document.getElementById('disconnectButton');
-const shell = document.getElementById('terminalShell');
-const terminalTitle = document.getElementById('terminalTitle');
-const terminalNote = document.getElementById('terminalNote');
-const terminalHost = document.getElementById('liveTerminal');
-
-let term;
-let fitAddon;
-let socket;
-
-function renderDestination() {
-  const destination = destinations[select.value];
-  preview.innerHTML = `
-    <span class="path-status">${escapeHtml(destination.status)}</span>
-    <h2>${escapeHtml(destination.title)}</h2>
-    <p>${escapeHtml(destination.description)}</p>
-    <code>${escapeHtml(destination.command)}</code>
-  `;
-
-  connectButton.textContent = destination.host ? 'Connect terminal' : 'Open destination';
-  terminalTitle.textContent = destination.title.toUpperCase();
-  terminalNote.innerHTML = destination.host
-    ? `Browser terminal endpoint: <code>${escapeHtml(buildEndpoint(destination))}</code>`
-    : 'This branch is not wired to the live terminal yet.';
-}
-
-function connectSelectedDestination() {
-  const destination = destinations[select.value];
-
-  if (destination.href) {
-    window.location.href = destination.href;
-    return;
-  }
-
-  if (!destination.host) {
-    showLocalTerminal(destination);
-    return;
-  }
-
-  openLiveTerminal(destination);
-}
-
-function createTerminal() {
-  terminalHost.innerHTML = '';
-  term = new Terminal({
-    cursorBlink: true,
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-    fontSize: 15,
-    theme: {
-      background: '#020503',
-      foreground: '#62ff8c',
-      cursor: '#ffe7b5',
-      selectionBackground: '#244b30'
-    }
-  });
-  fitAddon = new FitAddon.FitAddon();
-  term.loadAddon(fitAddon);
-  term.open(terminalHost);
-  fitAddon.fit();
-  window.addEventListener('resize', fitTerminal, { passive: true });
-}
-
-function openLiveTerminal(destination) {
-  disconnectTerminal();
-  shell.hidden = false;
-  createTerminal();
-  term.writeln('APFEL ORCHARD TERMINAL');
-  term.writeln('Opening WebSocket bridge...');
-  term.writeln('');
-
-  try {
-    const endpoint = buildEndpoint(destination);
-    term.writeln('Endpoint: ' + endpoint);
-    term.writeln('');
-    socket = new WebSocket(endpoint);
-    socket.binaryType = 'arraybuffer';
-
-    socket.addEventListener('open', () => {
-      term.writeln('CONNECT 57600');
-      term.writeln('');
-      term.onData(data => {
-        if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
-      });
-      fitTerminal();
-    });
-
-    socket.addEventListener('message', event => {
-      if (event.data instanceof ArrayBuffer) {
-        term.write(decodeCp437(new Uint8Array(event.data)));
-      } else if (event.data instanceof Blob) {
-        event.data.arrayBuffer().then(buffer => term.write(decodeCp437(new Uint8Array(buffer))));
-      } else {
-        term.write(String(event.data));
+    const destinations = {
+      bbs: {
+        title: 'Apfel Orchard BBS',
+        status: 'Ready',
+        description: 'Launches the live WebSocket terminal bridge to the Synchronet BBS.',
+        command: 'CONNECT bbs.apfelorchardlabs.org',
+        note: 'Browser terminal endpoint: <code>wss://bbs.apfelorchardlabs.org/</code> <span style="opacity:.75">iframe bridge</span>',
+        frame: 'bbs-live.html?v=20260611-iframe'
+      },
+      wang: {
+        title: 'Save The WANG',
+        status: 'Branch',
+        description: 'Preservation notes, recovered media, hardware records, and Wang Professional Computer work.',
+        command: 'OPEN https://savethewang.org',
+        href: 'https://savethewang.org',
+        note: 'External preservation branch.'
+      },
+      ibm: {
+        title: 'IBM Clones',
+        status: 'Grafting',
+        description: 'Future home for PC compatibles, cards, drives, utilities, and clone-era notes.',
+        command: 'C:\\>DIR /W',
+        note: 'This branch is not wired to the live terminal yet.'
+      },
+      amiga: {
+        title: 'Archive The Amiga',
+        status: 'Germinating',
+        description: 'Future archive for Amiga disks, demos, sound, graphics, and restoration notes.',
+        command: 'SYS:WORKBENCH',
+        note: 'This branch is not wired to the live terminal yet.'
       }
-    });
+    };
 
-    socket.addEventListener('close', () => {
-      term.writeln('');
-      term.writeln('[connection closed]');
-    });
+    const select = document.getElementById('destinationSelect');
+    const preview = document.getElementById('destinationPreview');
+    const connectButton = document.getElementById('connectButton');
+    const disconnectButton = document.getElementById('disconnectButton');
+    const shell = document.getElementById('terminalShell');
+    const terminalTitle = document.getElementById('terminalTitle');
+    const terminalNote = document.getElementById('terminalNote');
+    const bbsFrame = document.getElementById('bbsFrame');
 
-    socket.addEventListener('error', () => {
-      term.writeln('');
-      term.writeln('[connection error]');
-      term.writeln('Endpoint refused: ' + buildEndpoint(destination));
-      term.writeln('Check DNS/Cloudflare cache, then hard-refresh this page.');
-    });
-  } catch (error) {
-    term.writeln('[terminal unavailable]');
-    term.writeln(String(error));
-  }
-}
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
 
-function showLocalTerminal(destination) {
-  disconnectTerminal();
-  shell.hidden = false;
-  createTerminal();
-  term.writeln('APFEL ORCHARD TERMINAL');
-  term.writeln('----------------------');
-  term.writeln(destination.title.toUpperCase());
-  term.writeln('');
-  term.writeln(destination.description);
-  term.writeln('');
-  term.writeln(destination.command);
-  term.writeln('');
-  term.writeln('[destination not connected to live terminal yet]');
-}
+    function renderDestination() {
+      const destination = destinations[select.value];
+      preview.innerHTML = `
+        <span class="path-status">${escapeHtml(destination.status)}</span>
+        <h2>${escapeHtml(destination.title)}</h2>
+        <p>${escapeHtml(destination.description)}</p>
+        <code>${escapeHtml(destination.command)}</code>
+      `;
+      terminalTitle.textContent = destination.title.toUpperCase();
+      connectButton.textContent = destination.href ? 'Open destination' : destination.frame ? 'Connect terminal' : 'Preview destination';
+      terminalNote.innerHTML = destination.note;
+    }
 
-function disconnectTerminal() {
-  if (socket && socket.readyState <= 1) socket.close();
-  socket = null;
-  if (term) term.dispose();
-  term = null;
-  fitAddon = null;
-  terminalHost.innerHTML = '';
-}
+    function connectSelectedDestination() {
+      const destination = destinations[select.value];
 
-function fitTerminal() {
-  if (fitAddon) fitAddon.fit();
-}
+      if (destination.href) {
+        window.location.href = destination.href;
+        return;
+      }
 
+      shell.hidden = false;
+      terminalTitle.textContent = destination.title.toUpperCase();
 
-function buildEndpoint(destination) {
-  // The current Cloudflare/WebSocket bridge is published as plain ws://.
-  // Keeping this explicit avoids the browser upgrading to wss:// and missing the route.
-  if (destination.endpoint) return destination.endpoint;
-  return `ws://${destination.host}/`;
-}
+      if (destination.frame) {
+        bbsFrame.src = destination.frame;
+        setTimeout(() => bbsFrame.focus(), 300);
+        return;
+      }
 
-const cp437High = [
-  'Ç','ü','é','â','ä','à','å','ç','ê','ë','è','ï','î','ì','Ä','Å',
-  'É','æ','Æ','ô','ö','ò','û','ù','ÿ','Ö','Ü','¢','£','¥','₧','ƒ',
-  'á','í','ó','ú','ñ','Ñ','ª','º','¿','⌐','¬','½','¼','¡','«','»',
-  '░','▒','▓','│','┤','╡','╢','╖','╕','╣','║','╗','╝','╜','╛','┐',
-  '└','┴','┬','├','─','┼','╞','╟','╚','╔','╩','╦','╠','═','╬','╧',
-  '╨','╤','╥','╙','╘','╒','╓','╫','╪','┘','┌','█','▄','▌','▐','▀',
-  'α','ß','Γ','π','Σ','σ','µ','τ','Φ','Θ','Ω','δ','∞','φ','ε','∩',
-  '≡','±','≥','≤','⌠','⌡','÷','≈','°','∙','·','√','ⁿ','²','■',' '
-];
+      bbsFrame.srcdoc = `<!doctype html><html><body style="margin:0;background:#000;color:#62ff8c;font:16px monospace;padding:24px;white-space:pre-wrap">APFEL ORCHARD TERMINAL\n\n${escapeHtml(destination.title.toUpperCase())}\n\n${escapeHtml(destination.description)}\n\n${escapeHtml(destination.command)}\n\n[destination not connected to live terminal yet]</body></html>`;
+    }
 
-function decodeCp437(bytes) {
-  let output = '';
-  for (const byte of bytes) {
-    if (byte < 128) output += String.fromCharCode(byte);
-    else output += cp437High[byte - 128];
-  }
-  return output;
-}
+    function disconnectTerminal() {
+      bbsFrame.src = 'about:blank';
+      shell.hidden = true;
+    }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
+    select.addEventListener('change', renderDestination);
+    connectButton.addEventListener('click', connectSelectedDestination);
+    disconnectButton.addEventListener('click', disconnectTerminal);
 
-select.addEventListener('change', renderDestination);
-connectButton.addEventListener('click', connectSelectedDestination);
-disconnectButton.addEventListener('click', () => {
-  disconnectTerminal();
-  shell.hidden = true;
-});
-
-renderDestination();
-
-</script>
+    renderDestination();
+  </script>
 </body>
 </html>

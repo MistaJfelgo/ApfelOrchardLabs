@@ -620,3 +620,13 @@ pre {
   .live-terminal { min-height: 300px; height: 56vh; }
   .terminal-frame-bar strong { letter-spacing: .06em; font-size: .64rem; }
 }
+
+
+/* Embedded live BBS terminal frame */
+.bbs-terminal-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: #000;
+  color-scheme: dark;
+}

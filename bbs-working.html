@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apfel Orchard BBS - Live Terminal</title>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+  <style>
+    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+    body { color: #f2e7bf; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .statusbar {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 12px;
+      background: #0d0501;
+      border-bottom: 1px solid rgba(255, 190, 96, .25);
+      color: #f8e5b8;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .statusbar .state { color: #ffb347; }
+    #terminal { width: 100%; height: calc(100% - 32px); }
+    .xterm { padding: 10px 0 0 0; }
+    .xterm-viewport { background: #000 !important; }
+  </style>
+</head>
+<body>
+  <div class="statusbar">
+    <span>Apfel Orchard BBS</span>
+    <span class="state" id="state">Connecting</span>
+  </div>
+  <div id="terminal"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script>
+    const ENDPOINT = 'wss://bbs.apfelorchardlabs.org/';
+    const state = document.getElementById('state');
+    const term = new Terminal({
+      cursorBlink: true,
+      convertEol: false,
+      cols: 80,
+      rows: 25,
+      fontFamily: 'Cascadia Mono, Consolas, Menlo, monospace',
+      fontSize: 16,
+      lineHeight: 1.0,
+      letterSpacing: 0,
+      scrollback: 1000,
+      theme: {
+        background: '#000000',
+        foreground: '#d8d8d8',
+        cursor: '#f7e7bd',
+        black: '#000000',
+        red: '#aa0000',
+        green: '#00aa00',
+        yellow: '#aa5500',
+        blue: '#0000aa',
+        magenta: '#aa00aa',
+        cyan: '#00aaaa',
+        white: '#aaaaaa',
+        brightBlack: '#555555',
+        brightRed: '#ff5555',
+        brightGreen: '#55ff55',
+        brightYellow: '#ffff55',
+        brightBlue: '#5555ff',
+        brightMagenta: '#ff55ff',
+        brightCyan: '#55ffff',
+        brightWhite: '#ffffff'
+      }
+    });
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal'));
+    fitAddon.fit();
+    term.focus();
+
+    let socket;
+
+    function setState(value) { state.textContent = value; }
+
+    function connect() {
+      setState('Connecting');
+      socket = new WebSocket(ENDPOINT);
+      socket.binaryType = 'arraybuffer';
+
+      socket.addEventListener('open', () => {
+        setState('Connected');
+        term.focus();
+      });
+
+      socket.addEventListener('message', async (event) => {
+        if (event.data instanceof ArrayBuffer) {
+          term.write(new Uint8Array(event.data));
+        } else if (event.data instanceof Blob) {
+          const buffer = await event.data.arrayBuffer();
+          term.write(new Uint8Array(buffer));
+        } else {
+          term.write(event.data);
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        setState('Disconnected');
+        term.write('\r\n\r\n[connection closed]\r\n');
+      });
+
+      socket.addEventListener('error', () => {
+        setState('Error');
+        term.write('\r\n\r\n[connection error]\r\n');
+      });
+    }
+
+    term.onData((data) => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(data);
+      }
+    });
+
+    window.addEventListener('resize', () => fitAddon.fit(), { passive: true });
+    window.addEventListener('beforeunload', () => {
+      if (socket && socket.readyState <= WebSocket.OPEN) socket.close();
+    });
+
+    connect();
+  </script>
+</body>
+</html>
